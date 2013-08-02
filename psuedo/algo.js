@@ -38,7 +38,7 @@ function updateHorizon(shout){
 	var score = shout.amps - shout.muffles;
 	var scoreDelta = score - shout.oldScore;
 	var timeSinceLast = System.timeMillis() - shout.oldTime;
-	var radius = shout.oldRadius*(1 + ((scoreDelta)(timeSincePost/TIME_ADJUST)(SCORE_SCALE));
+	var radius = shout.oldRadius*(1 + (scoreDelta*SCORE_ADJUST) - (timeSincePost*TIME_ADJUST));
 	if (radius < MIN_RADIUS) radius = MIN_RADIUS;
 	return radius;	
 }
