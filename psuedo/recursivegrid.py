@@ -8,6 +8,8 @@ gridTable = {	"bin" : "int",
 			}
 gridTable.add({ bin : 0x100000000000000, max_long : 180.0, min_long : -180.0, max_lat : 180, min_lat : 0, users : {} })
 
+# Called when user makes shout/requests shouts/users added
+
 def resizeGrid(account_id, long, lat):
 	query = gridTable.where()
 				.le("min_lat", lat)
@@ -45,20 +47,14 @@ def splitGrid(query):
 	gridTable.remove("bin", query.bin)
 
 		
-def createGridBins(bin):
-	tempbin = bin
+def createGridBins(bi):
+	tempbin = bi
 	offset = -3
 	while tempbin %2 != 1:
 		tempbin >>= 1
 		offset += 1
-	base = bin ^ (5 << offset)
-	res = []
-	mask1 = mask2 = 1 << offset
-	for (j = 2; j > 0; j --):
-		for (k = 2; k > 0; k--):
-			res.append(base ^ (mask1 << j) ^ (mask2 << k))
-	return res
-
+	base = bi ^ (5 << offset)
+	return [base] + [base ^ (i << offset + 1) for i in xrange(1, 4)]
 
 ##################################################
 ##	Density stuff
@@ -73,7 +69,6 @@ def earthArea(long0, long1, lat0, lat1):
 
 	return 6370**2*latrad(lat0, lat1)*longrad(long0, long1)
 
-# Called when user makes shout/requests shouts/users added
 def resizeGrid1(account_id, long, lat):
 	query = gridTable.where()
 				.le("min_lat", lat)
