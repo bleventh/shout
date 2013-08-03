@@ -3,16 +3,16 @@ gridTable = {	"square" : "int",
 		"max_lat" : "float",
 		"min_long" : "float",
 		"max_long" : "float",
-		"users" : {	"aid" : "int", "lat" : "float", "long" : "float" }
+		"users" : {	"aid" : "int", "lat" : "float", "lon" : "float" }
 			}
 gridTable.add({ square : 0x100000000000000, max_long : 180.0, min_long : -180.0, max_lat : 180, min_lat : 0, users : {} })
 # Called when user makes shout/requests shouts/users added
-def resizeGrid(account_id, long, lat):
+def resizeGrid(lon, lat):
 	query = gridTable.where()
 			.le("min_lat", lat)
 			.gt("max_lat", lat)
-			.le("min_long", long)
-			.gt("max_long", long)
+			.le("min_long", lon)
+			.gt("max_long", lon)
 			.findAll()
 	pop = query.users.length()
 	if pop > 2*DESIRED_GRID_POPULATION:
@@ -33,10 +33,10 @@ def splitGrid(query):
 	user_squares = {0 : [], 1 : [], 2 : [], 3 : []}
 	for user in query.users:
 		if user.lat >= mid_lat:
-			if user.long >= mid_long: user_squares[0].append(user)
+			if user.lon >= mid_long: user_squares[0].append(user)
 			else: user_squares[1].append(user)
 		else
-			if user.long >= mid_long: user_squares[2].append(user)
+			if user.lon >= mid_long: user_squares[2].append(user)
 			else: user_squares[3].append(user)
 
 	for i in xrange(len(new_squares)):
@@ -91,12 +91,12 @@ def earthArea(long0, long1, lat0, lat1):
 
 	return 6370**2*latrad(lat0, lat1)*longrad(long0, long1)
 
-def resizeGrid1(account_id, long, lat):
+def resizeGrid1(account_id, lon, lat):
 	query = gridTable.where()
 			.le("min_lat", lat)
 			.gt("max_lat", lat)
-			.le("min_long", long)
-			.gt("max_long", long)
+			.le("min_long", lon)
+			.gt("max_long", lon)
 			.findAll()
 	area = earthArea(query.min_lat, query.max_lat, query.min_long, query.max_long)
 	grid_density = query.users.length()/area
