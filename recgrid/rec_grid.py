@@ -1,28 +1,30 @@
 from numpy import random
+from pylab import *
 import time
 
-DESIRED_GRID_POPULATION = 5
+DESIRED_GRID_POPULATION = 2
 
 def resizeGrid(lon, lat):
 	for sq_id in grid:
-		if lon >= grid[sq_id][0] and lon < grid[sq_id][1] and lat >= grid[sq_id][2] and lat < grid[sq_id][3]:
+		if lat >= grid[sq_id][0] and lat < grid[sq_id][1] and lon >= grid[sq_id][2] and lon < grid[sq_id][3]:
 			break
 	containing_sq = grid[sq_id]
 	population = len(containing_sq[4])
-	print "Population", population
 	if population > 2*DESIRED_GRID_POPULATION:
 		splitGrid(sq_id, containing_sq)
 	elif population < .5*DESIRED_GRID_POPULATION:
 		joinGrid(sq_id, containing_sq)
 
 def splitGrid(sq_id, super_sq):
+	print bin(sq_id)
 	mid_lat = (super_sq[1] - super_sq[0])/2
 	mid_long = (super_sq[3] - super_sq[2])/2
-	boundaries = { 0 : (mid_lat, super_sq[1], mid_long, super_sq[3]),
+	boundaries = {  0: (mid_lat, super_sq[1], mid_long, super_sq[3]),
 			1: (mid_lat, super_sq[1], super_sq[2], mid_long),
 			2: (super_sq[0], mid_lat, mid_long, super_sq[3]),
 			3: (super_sq[0], mid_lat, super_sq[2], mid_long) }
 	new_squares = createSubSquares(sq_id)
+	print [bin(sq) for sq in new_squares]
 	user_squares = { 0 : [], 1 : [], 2 : [], 3 : [] }
 	for user in super_sq[4]:
 		if user[1] >= mid_lat:
@@ -32,15 +34,19 @@ def splitGrid(sq_id, super_sq):
 			if user[2] >= mid_long: user_squares[2].append(user)
 			else: user_squares[3].append(user)
 	for i in xrange(len(new_squares)):
-		grid[new_squares[i]] = (boundaries[i][0], boundaries[i][1], boundaries[i][2], boundaries[i][3], [])
+		grid[new_squares[i]] = (boundaries[i][0], boundaries[i][1], boundaries[i][2], boundaries[i][3], user_squares[i])
 	del grid[sq_id]
 
 def joinGrid(sq_id, sub_sq):
 	pass
 
 def createSubSquares(sq_id):
-	q = sq_id >> 2
-	return [(sq_id << 1) - q, sq_id + q, sq_id -q, (sq_id >> 1) - q]
+	offset = 0
+	while sq_id & 4 != 4:
+		x >>= 2
+		offset += 2
+	sq_id = (sq_id ^ 5) << offset
+	return [sq_id, sq_id ^ (2 << offset), sq_id ^ (4 << offset), sq_id ^ (6 << offset)]
 
 def getSuperSquare(sq_id):
 	offset = 2
@@ -54,7 +60,7 @@ def getSuperSquare(sq_id):
 def addUser(user):
 	for sq_id in grid:
 		square = grid[sq_id]
-		if user[0] >= square[0] and user[0] < square[1] and user[1] >= square[2] and user[1] < square[3]:
+		if user[1] >= square[0] and user[1] < square[1] and user[2] >= square[2] and user[2] < square[3]:
 			square[4].append(user)
 			resizeGrid(user[1], user[2])
 			break
