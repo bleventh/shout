@@ -1,12 +1,12 @@
 
-gridTable = {	"bin" : "int", 
-				"min_lat" : "float", 
-				"max_lat" : "float",
-			 	"min_long" : "float",
-				"max_long" : "float",
-				"users" : {	"aid" : "int", "lat" : "float", "long" : "float" }
+gridTable = {	"square" : "int", 
+		"min_lat" : "float", 
+		"max_lat" : "float",
+		"min_long" : "float",
+		"max_long" : "float",
+		"users" : {	"aid" : "int", "lat" : "float", "long" : "float" }
 			}
-gridTable.add({ bin : 0x100000000000000, max_long : 180.0, min_long : -180.0, max_lat : 180, min_lat : 0, users : {} })
+gridTable.add({ square : 0x100000000000000, max_long : 180.0, min_long : -180.0, max_lat : 180, min_lat : 0, users : {} })
 
 # Called when user makes shout/requests shouts/users added
 
@@ -32,26 +32,51 @@ def splitGrid(query):
 					2 : (query.min_lat, min_lat, mid_long, query.max_long),
 					3 : (query.min_lat, min_lat, query.min_long, mid_long)
 				}
-	newbins = createGridBins(query.bin)
-	userbins = {0 : [], 1 : [], 2 : [], 3 : []}
+	new_squares = createGridSquares(query.square)
+	user_squares = {0 : [], 1 : [], 2 : [], 3 : []}
 	for user in query.users:
 		if user.lat >= mid_lat:
-			if user.long >= mid_long: userbins[0].append(user)
-			else: userbins[1].append(user)
+			if user.long >= mid_long: user_squares[0].append(user)
+			else: user_squares[1].append(user)
 		else
-			if user.long >= mid_long: userbins[2].append(user)
-			else: userbins[3].append(user)
+			if user.long >= mid_long: user_squares[2].append(user)
+			else: user_squares[3].append(user)
 
-	for i in xrange(len(newbins)):
-		gridTable.add({ bin : newbins[i], boundaries[i][0], boundaries[i][1], boundaries[i][2], boundaries[i][3], users : userbins[i] })
-	gridTable.remove("bin", query.bin)
+	for i in xrange(len(new_squares)):
+		gridTable.add({ square : new_squares[i], boundaries[i][0], boundaries[i][1], boundaries[i][2], boundaries[i][3], users : user_squares[i] })
+	gridTable.remove("quare", query.square)
 
+def joinGrid(query):
+	super_square = getSuperSquare(query.square);
+	sub_squares = createGridSquares(super_square)
+	longitudes = []
+	latitudes = []
+	total_people = []
+	square_rows = [gridTable.where().eq("square", sq).findAll()[0] for sq in sub_squares]
+	for sr in square_rows:
+		longitutes += [sr.min_long, sr.max_long]
+		latitudes += [sr.min_lat, sr.max_lat]
+		total_people += [sr.users.length()]
+	if total_people < .5*DESIRED_GRID_POPULATION:
+		row = gridTable.add({ square : super_square, min_lat : min(latitudes), max_lat : max(latitudes), min_long : min(longitudes), max_long : max(longitudes), users : {} });
+		for sr in square_row:
+			row.users.extend(sr.users)
+			sr.clear()
+
+def getSuperSquare(bi):
+	offset  = 2
+	while bi % 2 != 1:
+		bi >>= 1
+		offset += 1
+	bi >>= 2
+	bi |= 1
+	return bi << offset
 		
-def createGridBins(bi):
-	tempbin = bi
+def createGridSquares(bi):
+	temp_square = bi
 	offset = -3
-	while tempbin %2 != 1:
-		tempbin >>= 1
+	while temp_square % 2 != 1:
+		temp_square >>= 1
 		offset += 1
 	base = bi ^ (5 << offset)
 	return [base] + [base ^ (i << offset + 1) for i in xrange(1, 4)]
