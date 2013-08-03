@@ -70,13 +70,8 @@ def getSuperSquare(bi):
 	return bi << offset
 		
 def createGridSquares(bi):
-	temp_square = bi
-	offset = -3
-	while temp_square % 2 != 1:
-		temp_square >>= 1
-		offset += 1
-	base = bi ^ (5 << offset)
-	return [base] + [base ^ (i << offset + 1) for i in xrange(1, 4)]
+	q = bi >> 2
+	return [(bi << 1) -q, bi + q, bi - q, (bi >> 1) - q]
 
 ##################################################
 ##	Density stuff
