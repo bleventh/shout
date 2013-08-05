@@ -11,12 +11,12 @@ resizeGrid = function(lon, lat) {
 	joinGrid(query2);
 	console.log(db.recGridTable.toJSON());
 
-	// if (query.length() === 1) {
-	// 	var pop = query[0].users.length();
-	// 	if (pop > (2 * DESIRED_SQUARE_POPULATION)) splitGrid(query[0]);
-	// 	else if (pop < (.5 * DESIRED_SQUARE_POPULATION)) joinGrid(query[0]);
-	// }
-	// else console.log("nope");
+	if (query.length() === 1) {
+	 	var pop = query[0].users.length();
+	 	if (pop > (2 * DESIRED_SQUARE_POPULATION)) splitGrid(query[0]);
+	 	else if (pop < (.5 * DESIRED_SQUARE_POPULATION)) joinGrid(query[0]);
+	}
+	else console.log("nope");
 }
 
 splitGrid = function(squery) {
@@ -92,6 +92,4 @@ getSuperGID = function(gid) {
 	gid |= 1;
 	return gid << offset;
 }
-
-resizeGrid(50.0, 30.0);
 
