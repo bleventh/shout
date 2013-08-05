@@ -1,0 +1,128 @@
+<html>
+	<script src="./js/jquery.js" type="text/javascript"></script>
+	<script src="./js/jquery.flot.js" type="text/javascript"></script>
+	<head><title>Algorithm Simulation</title></head>
+	<body>
+		<center><div id="initRadiusLegend"></div></center>
+		<center><div id="initRadiusPlaceholder" style="width:1000px;height:500px;"></div></center>
+		<center><div id="updateRadiusLegend"></div></center>
+		<center><div id="updateRadiusPlaceholder" style="width:1000px;height:500px;"></div></center>	
+		<center><div id="hotRankLegend"></div></center>
+		<center><div id="hotRankPlaceholder" style="width:1000px;height:500px;"></div></center>	
+		<center><form id="constants">
+			Initial Radius:<input type="number" id="initRadius"><br>
+			Minimum Radius:<input type="number" id="minRadius"><br>
+			Scaling Percent:<input type="number" id="scaling"><br>
+			Magic Density:<input type="number" id="magicDensity"><br>
+			Leniency Percentage:<input type="number" id="leniency"><br>
+			Base Time Constant:<input type="number" id="baseTime"><br>
+		</form></center>
+		<center><button id="simulate">Simulate!</button></center>
+		<script id="source" type="text/javascript">
+		$(function() {
+
+			var NUM_DATA_POINTS = 100;
+			var INIT_RADIUS = null;
+			var MIN_RADIUS = null;
+			var SCALING_PERCENT = null;
+			var MAGIC_DENSITY = null;
+			var LENIENCY_PERCENTAGE = null;
+			var TIME_CONSTANT = null;
+			var UPPER_ACCEPT = null;
+			var LOWER_ACCEPT = null;
+
+			function getConstants() {
+				if ($('#initRadius').val() != "") INIT_RADIUS = $('#initRadius').val();
+				if ($('#minRadius').val() != "") MIN_RADIUS = $('#minRadius').val();
+				if ($('#scaling').val() != "") SCALING_PERCENT = $('#scaling').val()
+				if ($('#magicDensity').val() != "") MAGIC_DENSITY = $('#magicDensity').val();
+				if ($('#leniency').val() != "") LENIENCY_PERCENTAGE = $('#leniency').val();
+				if ($('#baseTime').val() != "") TIME_CONSTANT = $('#baseTime').val();
+				if (MAGIC_DENSITY != null && LENIENCY_PERCENTAGE != null){
+					UPPER_ACCEPT = MAGIC_DENSITY + MAGIC_DENSITY*LENIENCY_PERCENTAGE;
+					LOWER_ACCEPT = MAGIC_DENSITY - MAGIC_DENSITY*LENIENCY_PERCENTAGE;
+				}				
+			}
+
+			function getInitialRadius() {
+
+			}
+
+			function getHotRank(shout) {
+				var timeSincePost = shout.timeSincePost;
+				var popScore = shout.amps - shout.muffles;
+				var sign; 
+				if (popScore > 0) sign = 1;
+				else if (popScore < 0) sign = -1;
+				else sign = 0;
+				var maxVal;
+				if (popScore != 0) maxVal = Math.abs(popScore);
+				else maxVal = 1;
+				var hotRank = Math.log(maxVal) + (sign*timeSincePost)/(TIME_CONSTANT);
+				return hotRank;
+			}
+
+			function Shout(timeSincePost, amps, muffles) {
+				this.timeSincePost = timeSincePost;
+				this.amps = amps;
+				this.muffles = muffles;
+			}
+
+			function getHotRankTime(x) {
+				return x*2;
+			}
+
+			function getHotRankAmp(x) {
+				return x;
+			}
+
+			function showTooltip(x, y, contents) {
+				$('<div id="tooltip">' + contents + '</div>').css({
+					position: 'absolute',
+					top: y + 5,
+					left: x + 5,
+					border: '1px solid',
+					padding: '2px'
+				}).appendTo('body').fadeIn(200);
+			}
+
+			$('#hotRankPlaceholder').bind('plothover', function (event, pos, item) {
+				$('#tooltip').remove();
+				var x = item.datapoint[0];
+				var y = item.datapoint[1];
+				showTooltip(item.pageX, item.pageY, item.series.label + ": " + x + " = " + y);
+			})
+
+			$('#simulate').click(function() {
+				getConstants();
+
+				//hot rank
+				var hotRankData = {
+					"graphData": {
+						label: "Hot Score", data: []
+					}, 
+					"timeData": {
+						label: "Time Since Post", data: []
+					},
+					"ampData": {
+						label: "Amps", data: [] 
+					}
+				};
+				for (i = 0; i < NUM_DATA_POINTS; i++) {
+					var tempShout = new Shout(getHotRankTime(i), getHotRankAmp(i), 0);
+					var hotRank = getHotRank(tempShout);
+					hotRankData.graphData.data.push([i, hotRank]);
+					hotRankData.timeData.data.push([i, getHotRankTime(i)]);
+					hotRankData.ampData.data.push([i, getHotRankAmp(i)]);
+				}
+				$.plot($('#hotRankPlaceholder'), [hotRankData.graphData, hotRankData.timeData, hotRankData.ampData], {
+					points: {show: true},
+					series: {lines: {show: true}},
+					grid: {hoverable: true},
+					legend: {container: $('#hotRankLegend'), show: true}
+				});
+			});
+		});
+		</script>
+	</body>
+</html>
