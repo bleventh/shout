@@ -13,7 +13,7 @@
 			Initial Radius:<input type="number" id="initRadius"><br>
 			Minimum Radius:<input type="number" id="minRadius"><br>
 			Scaling Percent:<input type="number" id="scaling"><br>
-			Magic Density:<input type="number" id="magicDensity"><br>
+			Magic NumPeople:<input type="number" id="magicNumPeople"><br>
 			Leniency Percentage:<input type="number" id="leniency"><br>
 			Base Time Constant:<input type="number" id="baseTime"><br>
 		</form></center>
@@ -25,7 +25,7 @@
 			var INIT_RADIUS = null;
 			var MIN_RADIUS = null;
 			var SCALING_PERCENT = null;
-			var MAGIC_DENSITY = null;
+			var MAGIC_NUM_PEOPLE = null;
 			var LENIENCY_PERCENTAGE = null;
 			var TIME_CONSTANT = null;
 			var UPPER_ACCEPT = null;
@@ -35,17 +35,34 @@
 				if ($('#initRadius').val() != "") INIT_RADIUS = $('#initRadius').val();
 				if ($('#minRadius').val() != "") MIN_RADIUS = $('#minRadius').val();
 				if ($('#scaling').val() != "") SCALING_PERCENT = $('#scaling').val()
-				if ($('#magicDensity').val() != "") MAGIC_DENSITY = $('#magicDensity').val();
+				if ($('#magicNumPeople').val() != "") MAGIC_NUM_PEOPLE = $('#magicNumPeople').val();
 				if ($('#leniency').val() != "") LENIENCY_PERCENTAGE = $('#leniency').val();
 				if ($('#baseTime').val() != "") TIME_CONSTANT = $('#baseTime').val();
-				if (MAGIC_DENSITY != null && LENIENCY_PERCENTAGE != null){
-					UPPER_ACCEPT = MAGIC_DENSITY + MAGIC_DENSITY*LENIENCY_PERCENTAGE;
-					LOWER_ACCEPT = MAGIC_DENSITY - MAGIC_DENSITY*LENIENCY_PERCENTAGE;
+				if (MAGIC_NUM_PEOPLE != null && LENIENCY_PERCENTAGE != null){
+					UPPER_ACCEPT = MAGIC_NUM_PEOPLE + MAGIC_NUM_PEOPLE*LENIENCY_PERCENTAGE;
+					LOWER_ACCEPT = MAGIC_NUM_PEOPLE - MAGIC_NUM_PEOPLE*LENIENCY_PERCENTAGE;
 				}				
 			}
 
-			function getInitialRadius() {
+			function getAllShouts(location, radius) {
+				//to do 
+				//Conner?
+			}
 
+			function getInitialRadius(shout) {
+				var radius = INIT_RADIUS;
+				var shoutsInArea = getAllShouts(shout.location, radius);
+				while ((shoutsInArea > UPPER_ACCEPT || shoutsInArea < LOWER_ACCEPT) && radius > MIN_RADIUS) {
+					if (shoutsInArea > UPPER_ACCEPT) {
+						radius*=SCALING_PERCENT;
+						shoutsInArea = getAllShouts(shout.location, radius);
+					} else if (shoutsInArea < LOWER_ACCEPT) {
+						radius/=SCALING_PERCENT;
+						shoutsInArea = getAllShouts(shout.location, radius);
+					}
+				}
+				if (radius < MIN_RADIUS) radius = MIN_RADIUS;
+				return radius;
 			}
 
 			function getHotRank(shout) {
@@ -59,7 +76,7 @@
 				if (popScore != 0) maxVal = Math.abs(popScore);
 				else maxVal = 1;
 				var hotRank = Math.log(maxVal) + (sign*timeSincePost)/(TIME_CONSTANT);
-				return hotRank;
+				return hotRank; // for debug
 			}
 
 			function Shout(timeSincePost, amps, muffles) {
@@ -69,11 +86,11 @@
 			}
 
 			function getHotRankTime(x) {
-				return x*2;
+				return x; //modify to test. Plugin? 
 			}
 
 			function getHotRankAmp(x) {
-				return x;
+				return x; //modify to test. Plugin?
 			}
 
 			function showTooltip(x, y, contents) {
@@ -86,17 +103,7 @@
 				}).appendTo('body').fadeIn(200);
 			}
 
-			$('#hotRankPlaceholder').bind('plothover', function (event, pos, item) {
-				$('#tooltip').remove();
-				var x = item.datapoint[0];
-				var y = item.datapoint[1];
-				showTooltip(item.pageX, item.pageY, item.series.label + ": " + x + " = " + y);
-			})
-
-			$('#simulate').click(function() {
-				getConstants();
-
-				//hot rank
+			function getHotRankGraphData() {
 				var hotRankData = {
 					"graphData": {
 						label: "Hot Score", data: []
@@ -115,12 +122,29 @@
 					hotRankData.timeData.data.push([i, getHotRankTime(i)]);
 					hotRankData.ampData.data.push([i, getHotRankAmp(i)]);
 				}
+				return hotRankData;
+			}
+
+			function plot(hotRankData) {
 				$.plot($('#hotRankPlaceholder'), [hotRankData.graphData, hotRankData.timeData, hotRankData.ampData], {
 					points: {show: true},
 					series: {lines: {show: true}},
 					grid: {hoverable: true},
 					legend: {container: $('#hotRankLegend'), show: true}
 				});
+			}
+
+			$('#hotRankPlaceholder').bind('plothover', function (event, pos, item) {
+				$('#tooltip').remove();
+				var x = item.datapoint[0];
+				var y = item.datapoint[1];
+				showTooltip(item.pageX, item.pageY, item.series.label + ": " + x + " = " + y);
+			})
+
+			$('#simulate').click(function() {
+				getConstants();
+				var hotRankData = getHotRankGraphData();
+				plot(hotRankData);
 			});
 		});
 		</script>
