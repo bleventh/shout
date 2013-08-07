@@ -26,12 +26,10 @@ function getInitialHorizon(shout) {
 		}
 	}
 	if (radius < MIN_RADIUS) radius = MIN_RADIUS;
-	shout.oldRadius = radius;
-	shout.oldScore = 0; 
-	return radius;	
+	return radius;
 }
 
-function updateHorizon(shout){
+function updateRadius(shout) {
 	var score = shout.amps - shout.muffles;
 	var scoreDelta = score - shout.oldScore;
 	var timeSinceLast = System.timeMillis() - shout.oldTime;
@@ -39,17 +37,17 @@ function updateHorizon(shout){
 	if (radius < MIN_RADIUS) radius = MIN_RADIUS;
 	return radius;	
 }
-
+			
 function getHotRank(shout) {
-	var timeSincePost = TIME_NOW-shout.creationTime;
-	var popularityScore = shout.amps - shout.muffles;
-	var sign;
-	if (popularityScore > 0) sign = 1;
-	else if (popularityScore < 0) sign = -1;
-	else sign = 0; 
+	var timeSincePost = shout.timeSincePost;
+	var popScore = shout.amps - shout.muffles;
+	var sign; 
+	if (popScore > 0) sign = 1;
+	else if (popScore < 0) sign = -1;
+	else sign = 0;
 	var maxVal;
-	if (popularityScore != 0) maxVal = abs(popularityScore);
-	else maxVal = 1; 
+	if (popScore != 0) maxVal = Math.abs(popScore);
+	else maxVal = 1;
 	var hotRank = Math.log(maxVal) + (sign*timeSincePost)/(TIME_CONSTANT);
 	return hotRank; // for debug
 } 
