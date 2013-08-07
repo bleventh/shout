@@ -1,5 +1,8 @@
 module.exports = function(app) {
    app.get('/shouts', function(req, res) {
+      if (req.connection) {
+         console.log("connection!");
+      } 
       res.send(JSON.stringify({'thisIsA': 'shout!', 'thisIsAnother':'shout2!'}));
    });
 

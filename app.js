@@ -1,15 +1,30 @@
-var express = require('express'),
+var express   = require('express'),
     shoutsAPI = require('./controllers/shouts.js'),
-    authAPI = require('./controllers/auth.js'),
-    userAPI = require('./controllers/user.js'),
-    voteAPI = require('./controllers/amp.js');
+    authAPI   = require('./controllers/auth.js'),
+    userAPI   = require('./controllers/user.js'),
+    mysql     = require('mysql'),
+    voteAPI   = require('./controllers/amp.js');
 var app = express();
 
 /**
  * MiddleWare
  */
+var connection = mysql.createConnection({
+  host     : 'localhost:3306',
+  user     : 'escher',
+  password : 'blacapps69'
+});
 
-//put middleware in here if needed
+connection.connect(function(err) {
+    if (err) {
+        console.log('db error: ' + err);
+    }
+});
+
+app.use(function(req, res, next) {
+    req.connection = connection;
+    next();
+});
 
 /**
  * Routing
